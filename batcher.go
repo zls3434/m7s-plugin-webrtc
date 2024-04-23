@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	. "github.com/pion/webrtc/v4"
+	"github.com/zls3434/m7s-engine/v4/codec"
+	"github.com/zls3434/m7s-engine/v4/util"
 	"go.uber.org/zap"
-	"m7s.live/engine/v4/codec"
-	"m7s.live/engine/v4/util"
 )
 
 type Signal struct {
@@ -49,7 +49,7 @@ func NewAnswerSingal(sdp string) string {
 type WebRTCBatcher struct {
 	PageSize      int
 	PageNum       int
-	subscribers   util.Map[string,*WebRTCBatchSubscriber]
+	subscribers   util.Map[string, *WebRTCBatchSubscriber]
 	signalChannel *DataChannel
 	WebRTCPublisher
 }

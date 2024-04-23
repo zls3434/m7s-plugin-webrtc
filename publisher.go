@@ -6,9 +6,9 @@ import (
 
 	"github.com/pion/rtcp"
 	. "github.com/pion/webrtc/v4"
+	. "github.com/zls3434/m7s-engine/v4"
+	"github.com/zls3434/m7s-engine/v4/codec"
 	"go.uber.org/zap"
-	. "m7s.live/engine/v4"
-	"m7s.live/engine/v4/codec"
 )
 
 type WebRTCPublisher struct {

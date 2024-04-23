@@ -28,7 +28,7 @@
     navigator.mediaDevices.enumerateDevices().then((devices) => {
       devices.forEach((device) => {
         console.log(device.kind + ": " + device.label + " id = " + device.deviceId);
-        if (device.kind == 'videoinput' && !screenshare) {
+        if (device.kind === 'videoinput' && !screenshare) {
           const a = document.createElement('a');
           a.href = location.pathname + '?videoinput=' + device.deviceId;
           a.innerHTML = device.label;
