@@ -1,4 +1,4 @@
-module m7s.live/plugin/webrtc/v4
+module github.com/zls3434/m7s-plugin-webrtc/v4
 
 go 1.19
 
