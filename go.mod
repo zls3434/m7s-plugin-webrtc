@@ -6,7 +6,7 @@ require (
 	github.com/pion/interceptor v0.1.25
 	github.com/pion/rtcp v1.2.12
 	github.com/pion/webrtc/v4 v4.0.0-beta.7
-	github.com/zls3434/m7s-engine/v4 v4.15.2
+	github.com/zls3434/m7s-engine/v4 v4.15.3
 	go.uber.org/zap v1.26.0
 )
 
