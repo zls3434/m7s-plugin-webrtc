@@ -18,7 +18,7 @@ import (
 	. "github.com/pion/webrtc/v4"
 	"github.com/zls3434/m7s-engine/v4/config"
 	"github.com/zls3434/m7s-engine/v4/util"
-	"monibuca/plugin/webrtc/webrtc"
+	"github.com/zls3434/m7s-plugin-webrtc/v4/webrtc"
 )
 
 // }{[]string{
