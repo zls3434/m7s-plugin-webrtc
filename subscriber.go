@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/pion/rtcp"
-	. "github.com/pion/webrtc/v4"
-	. "github.com/zls3434/m7s-engine/v4"
+	prtc "github.com/pion/webrtc/v4"
+	"github.com/zls3434/m7s-engine/v4"
 	"github.com/zls3434/m7s-engine/v4/codec"
 	"github.com/zls3434/m7s-engine/v4/track"
 	"github.com/zls3434/m7s-engine/v4/util"
@@ -14,17 +14,17 @@ import (
 )
 
 type trackSender struct {
-	*TrackLocalStaticRTP
-	*RTPSender
+	*prtc.TrackLocalStaticRTP
+	*prtc.RTPSender
 	// seq uint32
 }
 
 type WebRTCSubscriber struct {
-	Subscriber
+	engine.Subscriber
 	WebRTCIO
 	audio       trackSender
 	video       trackSender
-	DC          *DataChannel
+	DC          *prtc.DataChannel
 	videoTracks []*track.Video
 	audioTracks []*track.Audio
 	// flvHeadCache []byte
@@ -85,10 +85,10 @@ func (suber *WebRTCSubscriber) OnSubscribe() {
 					pli = list[0][1]
 				}
 			}
-			suber.video.TrackLocalStaticRTP, _ = NewTrackLocalStaticRTP(RTPCodecCapability{MimeType: MimeTypeH264, SDPFmtpLine: "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=" + pli}, video.Name, suber.Subscriber.Stream.Path)
+			suber.video.TrackLocalStaticRTP, _ = prtc.NewTrackLocalStaticRTP(prtc.RTPCodecCapability{MimeType: prtc.MimeTypeH264, SDPFmtpLine: "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=" + pli}, video.Name, suber.Subscriber.Stream.Path)
 		} else if video = vm[codec.CodecID_AV1]; video != nil {
 			suber.Subscriber.AddTrack(video)
-			suber.video.TrackLocalStaticRTP, _ = NewTrackLocalStaticRTP(RTPCodecCapability{MimeType: MimeTypeAV1, SDPFmtpLine: fmt.Sprintf("profile=%d;level-idx=%d;tier=%d", video.ParamaterSets[1][1], video.ParamaterSets[1][0], video.ParamaterSets[1][2])}, video.Name, suber.Subscriber.Stream.Path)
+			suber.video.TrackLocalStaticRTP, _ = prtc.NewTrackLocalStaticRTP(prtc.RTPCodecCapability{MimeType: prtc.MimeTypeAV1, SDPFmtpLine: fmt.Sprintf("profile=%d;level-idx=%d;tier=%d", video.ParamaterSets[1][1], video.ParamaterSets[1][0], video.ParamaterSets[1][2])}, video.Name, suber.Subscriber.Stream.Path)
 		}
 		if suber.video.TrackLocalStaticRTP != nil {
 			suber.video.RTPSender, _ = suber.PeerConnection.AddTrack(suber.video.TrackLocalStaticRTP)
@@ -112,19 +112,19 @@ func (suber *WebRTCSubscriber) OnSubscribe() {
 			}()
 		}
 		var audio *track.Audio
-		audioMimeType := MimeTypePCMA
+		audioMimeType := prtc.MimeTypePCMA
 		if am[codec.CodecID_PCMA] != nil {
 			audio = am[codec.CodecID_PCMA]
 		} else if am[codec.CodecID_PCMU] != nil {
-			audioMimeType = MimeTypePCMU
+			audioMimeType = prtc.MimeTypePCMU
 			audio = am[codec.CodecID_PCMU]
 		} else if am[codec.CodecID_OPUS] != nil {
-			audioMimeType = MimeTypeOpus
+			audioMimeType = prtc.MimeTypeOpus
 			audio = am[codec.CodecID_OPUS]
 		}
 		if audio != nil {
 			suber.Subscriber.AddTrack(audio)
-			suber.audio.TrackLocalStaticRTP, _ = NewTrackLocalStaticRTP(RTPCodecCapability{MimeType: audioMimeType}, audio.Name, suber.Subscriber.Stream.Path)
+			suber.audio.TrackLocalStaticRTP, _ = prtc.NewTrackLocalStaticRTP(prtc.RTPCodecCapability{MimeType: audioMimeType}, audio.Name, suber.Subscriber.Stream.Path)
 			if suber.audio.TrackLocalStaticRTP != nil {
 				suber.audio.RTPSender, _ = suber.PeerConnection.AddTrack(suber.audio.TrackLocalStaticRTP)
 			}
@@ -186,7 +186,7 @@ func (suber *WebRTCSubscriber) OnEvent(event any) {
 	// 	if suber.DC != nil {
 	// 		suber.queueDCData(codec.AudioAVCC2FLV(0, v)...)
 	// 	}
-	case VideoRTP:
+	case engine.VideoRTP:
 		// if suber.video.TrackLocalStaticRTP != nil {
 		if err = suber.video.WriteRTP(v.Packet); err != nil {
 			suber.Stop(zap.Error(err))
@@ -196,7 +196,7 @@ func (suber *WebRTCSubscriber) OnEvent(event any) {
 		// 	suber.video.seq = suber.VideoReader.Frame.Sequence
 		// 	suber.sendAvByDatachannel(9, suber.VideoReader)
 		// }
-	case AudioRTP:
+	case engine.AudioRTP:
 		// if suber.audio.TrackLocalStaticRTP != nil {
 		if err = suber.audio.WriteRTP(v.Packet); err != nil {
 			suber.Stop(zap.Error(err))
@@ -206,14 +206,14 @@ func (suber *WebRTCSubscriber) OnEvent(event any) {
 		// 	suber.audio.seq = suber.AudioReader.Frame.Sequence
 		// 	suber.sendAvByDatachannel(8, suber.AudioReader)
 		// }
-	case FLVFrame:
+	case engine.FLVFrame:
 		for _, data := range util.SplitBuffers(v, 65535) {
 			if err = suber.queueDCData(data...); err != nil {
 				suber.Stop(zap.Error(err))
 				return
 			}
 		}
-	case ISubscriber:
+	case engine.ISubscriber:
 		suber.OnSubscribe()
 		if suber.DC != nil {
 			suber.DC.OnOpen(func() {
@@ -225,17 +225,17 @@ func (suber *WebRTCSubscriber) OnEvent(event any) {
 				}()
 			})
 		}
-		suber.OnConnectionStateChange(func(pcs PeerConnectionState) {
+		suber.OnConnectionStateChange(func(pcs prtc.PeerConnectionState) {
 			suber.Info("Connection State has changed:" + pcs.String())
 			switch pcs {
-			case PeerConnectionStateConnected:
+			case prtc.PeerConnectionStateConnected:
 				if suber.DC == nil {
 					go func() {
 						suber.PlayRTP()
 						suber.PeerConnection.Close()
 					}()
 				}
-			case PeerConnectionStateDisconnected, PeerConnectionStateFailed, PeerConnectionStateClosed:
+			case prtc.PeerConnectionStateDisconnected, prtc.PeerConnectionStateFailed, prtc.PeerConnectionStateClosed:
 				suber.Stop(zap.String("reason", pcs.String()))
 			}
 		})
@@ -251,7 +251,7 @@ type WebRTCBatchSubscriber struct {
 
 func (suber *WebRTCBatchSubscriber) OnEvent(event any) {
 	switch event.(type) {
-	case ISubscriber:
+	case engine.ISubscriber:
 		suber.OnSubscribe()
 	default:
 		suber.WebRTCSubscriber.OnEvent(event)

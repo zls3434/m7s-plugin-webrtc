@@ -5,30 +5,30 @@ import (
 	"time"
 
 	"github.com/pion/rtcp"
-	. "github.com/pion/webrtc/v4"
-	. "github.com/zls3434/m7s-engine/v4"
+	prtc "github.com/pion/webrtc/v4"
+	"github.com/zls3434/m7s-engine/v4"
 	"github.com/zls3434/m7s-engine/v4/codec"
 	"go.uber.org/zap"
 )
 
 type WebRTCPublisher struct {
-	Publisher
+	engine.Publisher
 	WebRTCIO
-	audioTrack atomic.Pointer[TrackRemote]
-	videoTrack atomic.Pointer[TrackRemote]
+	audioTrack atomic.Pointer[prtc.TrackRemote]
+	videoTrack atomic.Pointer[prtc.TrackRemote]
 }
 
 func (puber *WebRTCPublisher) OnEvent(event any) {
 	switch event.(type) {
-	case IPublisher:
+	case engine.IPublisher:
 		puber.OnTrack(puber.onTrack)
 	}
 	puber.Publisher.OnEvent(event)
 }
 
-func (puber *WebRTCPublisher) onTrack(track *TrackRemote, receiver *RTPReceiver) {
+func (puber *WebRTCPublisher) onTrack(track *prtc.TrackRemote, receiver *prtc.RTPReceiver) {
 	puber.Info("onTrack", zap.String("kind", track.Kind().String()), zap.Uint8("payloadType", uint8(track.Codec().PayloadType)))
-	if codecP := track.Codec(); track.Kind() == RTPCodecTypeAudio {
+	if codecP := track.Codec(); track.Kind() == prtc.RTPCodecTypeAudio {
 		puber.audioTrack.Store(track)
 		if puber.AudioTrack == nil {
 			switch codecP.PayloadType {
@@ -91,7 +91,7 @@ func (puber *WebRTCPublisher) onTrack(track *TrackRemote, receiver *RTPReceiver)
 	}
 }
 
-func (puber *WebRTCPublisher) writeRTCP(track *TrackRemote) {
+func (puber *WebRTCPublisher) writeRTCP(track *prtc.TrackRemote) {
 	ticker := time.NewTicker(webrtcConfig.PLI)
 	defer ticker.Stop()
 	for {

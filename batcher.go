@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	. "github.com/pion/webrtc/v4"
+	prtc "github.com/pion/webrtc/v4"
 	"github.com/zls3434/m7s-engine/v4/codec"
 	"github.com/zls3434/m7s-engine/v4/util"
 	"go.uber.org/zap"
@@ -50,30 +50,30 @@ type WebRTCBatcher struct {
 	PageSize      int
 	PageNum       int
 	subscribers   util.Map[string, *WebRTCBatchSubscriber]
-	signalChannel *DataChannel
+	signalChannel *prtc.DataChannel
 	WebRTCPublisher
 }
 
 func (suber *WebRTCBatcher) Start() (err error) {
-	suber.OnICECandidate(func(ice *ICECandidate) {
+	suber.OnICECandidate(func(ice *prtc.ICECandidate) {
 		if ice != nil {
 			WebRTCPlugin.Info(ice.ToJSON().Candidate)
 		}
 	})
-	suber.OnDataChannel(func(d *DataChannel) {
+	suber.OnDataChannel(func(d *prtc.DataChannel) {
 		WebRTCPlugin.Info("OnDataChannel:" + d.Label())
 		suber.signalChannel = d
 		suber.signalChannel.OnMessage(suber.Signal)
 	})
-	if err = suber.SetRemoteDescription(SessionDescription{Type: SDPTypeOffer, SDP: suber.SDP}); err != nil {
+	if err = suber.SetRemoteDescription(prtc.SessionDescription{Type: prtc.SDPTypeOffer, SDP: suber.SDP}); err != nil {
 		return
 	}
-	suber.OnConnectionStateChange(func(pcs PeerConnectionState) {
+	suber.OnConnectionStateChange(func(pcs prtc.PeerConnectionState) {
 		WebRTCPlugin.Info("Connection State has changed:" + pcs.String())
 		switch pcs {
-		case PeerConnectionStateConnected:
+		case prtc.PeerConnectionStateConnected:
 
-		case PeerConnectionStateDisconnected, PeerConnectionStateFailed:
+		case prtc.PeerConnectionStateDisconnected, prtc.PeerConnectionStateFailed:
 			zr := zap.String("reason", pcs.String())
 			suber.subscribers.Range(func(key string, value *WebRTCBatchSubscriber) {
 				value.Stop(zr)
@@ -101,7 +101,7 @@ func (suber *WebRTCBatcher) Answer() (err error) {
 	return
 }
 
-func (suber *WebRTCBatcher) Signal(msg DataChannelMessage) {
+func (suber *WebRTCBatcher) Signal(msg prtc.DataChannelMessage) {
 	var s Signal
 	// var offer SessionDescription
 	if err := json.Unmarshal(msg.Data, &s); err != nil {
@@ -109,7 +109,7 @@ func (suber *WebRTCBatcher) Signal(msg DataChannelMessage) {
 	} else {
 		switch s.Type {
 		case "subscribe":
-			if err = suber.SetRemoteDescription(SessionDescription{Type: SDPTypeOffer, SDP: s.Offer}); err != nil {
+			if err = suber.SetRemoteDescription(prtc.SessionDescription{Type: prtc.SDPTypeOffer, SDP: s.Offer}); err != nil {
 				WebRTCPlugin.Error("Signal SetRemoteDescription", zap.Error(err))
 				return
 			}
@@ -155,7 +155,7 @@ func (suber *WebRTCBatcher) Signal(msg DataChannelMessage) {
 		// 	suber.SetLocalDescription(offer)
 		// }
 		case "publish", "unpublish":
-			if err = suber.SetRemoteDescription(SessionDescription{Type: SDPTypeOffer, SDP: s.Offer}); err != nil {
+			if err = suber.SetRemoteDescription(prtc.SessionDescription{Type: prtc.SDPTypeOffer, SDP: s.Offer}); err != nil {
 				WebRTCPlugin.Error("Signal SetRemoteDescription", zap.Error(err))
 				return
 			}
@@ -168,7 +168,7 @@ func (suber *WebRTCBatcher) Signal(msg DataChannelMessage) {
 				}
 			}
 		case "answer":
-			if err = suber.SetRemoteDescription(SessionDescription{Type: SDPTypeAnswer, SDP: s.Answer}); err != nil {
+			if err = suber.SetRemoteDescription(prtc.SessionDescription{Type: prtc.SDPTypeAnswer, SDP: s.Answer}); err != nil {
 				WebRTCPlugin.Error("Signal SetRemoteDescription", zap.Error(err))
 				return
 			}

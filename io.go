@@ -1,11 +1,11 @@
 package webrtc
 
 import (
-	. "github.com/pion/webrtc/v4"
+	prtc "github.com/pion/webrtc/v4"
 )
 
 type WebRTCIO struct {
-	*PeerConnection
+	*prtc.PeerConnection
 	SDP string
 	// LocalSDP *sdp.SessionDescription
 }
@@ -20,7 +20,7 @@ func (IO *WebRTCIO) GetAnswer() (string, error) {
 	// if err != nil {
 	// 	return "", err
 	// }
-	gatherComplete := GatheringCompletePromise(IO.PeerConnection)
+	gatherComplete := prtc.GatheringCompletePromise(IO.PeerConnection)
 	if err := IO.SetLocalDescription(answer); err != nil {
 		return "", err
 	}
